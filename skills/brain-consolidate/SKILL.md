@@ -1,6 +1,7 @@
 ---
 name: brain-consolidate
 description: The consolidation loop (hippocampus → cortex) for the second brain — turning the inbox and episodic logs into durable semantic notes, deduplicating, superseding contradictions, re-scoring importance, and fixing lint. Use for the weekly review (/brain:review), when the inbox has a backlog, or when the user says "dọn dẹp bộ não", "tổng hợp ghi chú", "consolidate memory".
+user-invocable: false
 ---
 
 # Brain consolidation

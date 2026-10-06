@@ -11,6 +11,7 @@ or via the repo's ``.mcp.json``.
 from __future__ import annotations
 
 import json
+import signal
 import sys
 import traceback
 from typing import Any, Callable, Dict, List, Optional
@@ -320,6 +321,21 @@ def serve(config: Config) -> int:
     server = BrainServer(config)
     stdin = sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin
     out = sys.stdout
+    # Claude Code stops stdio servers with SIGINT/SIGTERM rather than closing
+    # stdin; exit quietly either way.
+    try:
+        signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
+    except (ValueError, OSError):  # not the main thread / unsupported platform
+        pass
+    try:
+        return _serve_loop(server, stdin, out)
+    except KeyboardInterrupt:
+        return 0
+    finally:
+        server.index.close()
+
+
+def _serve_loop(server: "BrainServer", stdin, out) -> int:
     while True:
         raw = _read_message(stdin)
         if raw is None:
@@ -343,5 +359,4 @@ def serve(config: Config) -> int:
             if resp is not None:
                 out.write(json.dumps(resp, ensure_ascii=False) + "\n")
                 out.flush()
-    server.index.close()
     return 0

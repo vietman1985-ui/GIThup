@@ -18,6 +18,7 @@ from .lint import format_issues, run_lint
 from .memory import (
     capture,
     consolidation_packet,
+    ensure_vault,
     init_vault,
     log_event,
     remember,
@@ -179,16 +180,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.cmd == "hook":
         from .hooks import run as run_hook
 
+        try:
+            ensure_vault(config, template_dir=REPO_ROOT / "vault")
+        except OSError:
+            pass
         if not config.vault.is_dir():
-            return 0  # no vault yet: stay silent, never break the session
+            return 0  # no vault and not allowed to create one: stay silent, never break the session
         return run_hook(config, args.event)
-
-    _require_vault(config)
 
     if args.cmd == "mcp":
         from .mcp_server import serve
 
+        ensure_vault(config, template_dir=REPO_ROOT / "vault")
+        _require_vault(config)
         return serve(config)
+
+    _require_vault(config)
 
     with Index(config) as index:
         if args.cmd == "index":

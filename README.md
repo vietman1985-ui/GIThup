@@ -32,13 +32,14 @@ Yêu cầu: Python ≥ 3.8 (có sẵn trên macOS/Linux; Windows cài từ pytho
 /plugin install brain@githup
 ```
 
-Khởi động lại Claude Code. Sau đó tạo vault cá nhân (mặc định `~/.brain/vault`):
+Khởi động lại Claude Code — xong. Vault cá nhân được tạo tự động ở `~/.brain/vault` trong lần dùng đầu tiên (gồm `_schema.md` và template, chưa có ghi chú). Muốn lấy luôn vault mẫu của repo (có khảo sát + ví dụ):
 
 ```bash
-python3 ~/.claude/plugins/marketplaces/githup/bin/brain init
+git clone https://github.com/vietman1985-ui/GIThup.git
+BRAIN_VAULT=~/.brain/vault python3 GIThup/bin/brain init
 ```
 
-(hoặc trong Claude Code gõ: *"chạy brain init cho tôi"* — Claude biết đường dẫn.)
+Windows: cài Python từ python.org hoặc Microsoft Store (có sẵn lệnh `python3`), rồi làm y hệt trong PowerShell.
 
 **Cách 2 — dùng thử không cài:**
 
@@ -106,7 +107,7 @@ Mở thư mục `vault/` bằng Obsidian là có graph view, backlinks… đầy
 
 ### Vault nằm ở đâu?
 
-Thứ tự: biến môi trường `BRAIN_VAULT` → file `.brain.toml` gần nhất (repo này trỏ vào `./vault`) → `~/.brain/vault`. `brain where` cho biết đang dùng vault nào. Bạn có thể đặt vault trong một repo git riêng để đồng bộ nhiều máy.
+Thứ tự: biến môi trường `BRAIN_VAULT` → file `.brain.toml` gần nhất (repo này trỏ vào `./vault`) → `~/.brain/vault` (tự tạo khi chưa có). `brain where` cho biết đang dùng vault nào. Bạn có thể đặt vault trong một repo git riêng để đồng bộ nhiều máy, hoặc trỏ `BRAIN_VAULT` vào vault Obsidian sẵn có.
 
 ## Tốt hơn các repo đang có ở điểm nào
 

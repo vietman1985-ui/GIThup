@@ -23,9 +23,10 @@ tools are deterministic.
 | `brain_lint` / `brain_packet {days}` | `brain lint` / `brain packet --days 7` | health report / weekly consolidation brief |
 | `brain_set_status {path, status}` | `brain status "<ref>" archived` | active · superseded · archived · draft |
 
-If MCP tools are not loaded, the CLI lives at `<plugin root>/bin/brain`
-(run `python3 <plugin root>/bin/brain …`); in this repository that is
-`./bin/brain`. `brain where` prints which vault is in use.
+If MCP tools are not loaded, use the CLI: `python3 "${CLAUDE_PLUGIN_ROOT}/bin/brain" …`
+(inside the GIThup repository itself: `python3 bin/brain …`). `brain where`
+prints which vault is in use; the default is `~/.brain/vault`, created on
+first use.
 
 ## The loop: RECALL → ACT → REMEMBER → LOG
 

@@ -44,6 +44,23 @@ class HookTests(VaultTestCase):
         self.assertEqual(len(logs), 1)
         self.assertIn("touched 1 file(s): a.py", logs[0].read_text(encoding="utf-8"))
 
+    def test_default_vault_is_created_on_first_hook(self):
+        env = {k: v for k, v in os.environ.items() if k not in ("BRAIN_VAULT",)}
+        env["BRAIN_HOME"] = str(self.tmp / "home-brain")
+        r = subprocess.run(BRAIN + ["hook", "session-start"], input=json.dumps({"session_id": "auto", "cwd": "/p", "source": "startup"}), capture_output=True, text=True, env=env, cwd=str(self.tmp))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        vault = self.tmp / "home-brain" / "vault"
+        self.assertTrue((vault / "Home.md").exists())
+        self.assertTrue((vault / "_schema.md").exists(), "schema is copied from the plugin's seed vault")
+        self.assertTrue((vault / "_templates" / "fact.md").exists())
+        self.assertFalse((vault / "wiki" / "Second brain landscape 2026.md").exists(), "example notes are not copied")
+        self.assertIn("[brain]", json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"])
+        # an explicit but missing BRAIN_VAULT is never auto-created
+        env["BRAIN_VAULT"] = str(self.tmp / "explicit-missing")
+        r = subprocess.run(BRAIN + ["hook", "session-start"], input="{}", capture_output=True, text=True, env=env, cwd=str(self.tmp))
+        self.assertEqual((r.returncode, r.stdout), (0, ""))
+        self.assertFalse((self.tmp / "explicit-missing").exists())
+
     def test_hook_never_fails_on_garbage(self):
         env = dict(os.environ, BRAIN_VAULT=str(self.vault))
         r = subprocess.run(BRAIN + ["hook", "prompt"], input="not json", capture_output=True, text=True, env=env, cwd=str(self.tmp))

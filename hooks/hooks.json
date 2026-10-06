@@ -3,11 +3,11 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/brain\" hook session-start",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/bin/brain", "hook", "session-start"],
             "timeout": 15
           }
         ]
@@ -18,7 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/brain\" hook prompt",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/bin/brain", "hook", "prompt"],
             "timeout": 10
           }
         ]
@@ -30,7 +31,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/brain\" hook post-tool",
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/bin/brain", "hook", "post-tool"],
             "timeout": 10
           }
         ]
@@ -41,8 +43,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/brain\" hook session-end",
-            "timeout": 15
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/bin/brain", "hook", "session-end"],
+            "timeout": 1
           }
         ]
       }

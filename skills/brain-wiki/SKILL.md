@@ -1,6 +1,7 @@
 ---
 name: brain-wiki
 description: Compile knowledge pages (LLM-wiki pattern) in the second brain — turning immutable sources in raw/ into cited, cross-linked wiki pages, updating maps of content, and keeping the wiki lint-clean. Use for /brain:compile, when a new document/article/transcript is added to the vault, or when the user says "tổng hợp tài liệu", "viết trang wiki", "compile this source".
+user-invocable: false
 ---
 
 # Brain wiki compilation

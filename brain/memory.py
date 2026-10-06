@@ -90,6 +90,33 @@ def init_vault(config: Config, template_dir: Optional[Path] = None, force: bool 
     return created
 
 
+def ensure_vault(config: Config, template_dir: Optional[Path] = None) -> bool:
+    """Create the vault on first use when it is the user-level default.
+
+    Hooks and the MCP server call this so a freshly installed plugin works
+    without a manual ``brain init``.  Only the schema and templates are
+    copied from ``template_dir`` — never the example notes.  Returns True if
+    the vault was created.
+    """
+    if config.vault.is_dir():
+        return False
+    if not config.source.startswith("default"):
+        return False  # an explicit BRAIN_VAULT / .brain.toml that is missing is the user's call
+    init_vault(config, template_dir=None)
+    if template_dir is not None and template_dir.is_dir():
+        for rel in ("_schema.md",):
+            src = template_dir / rel
+            if src.is_file() and not (config.vault / rel).exists():
+                (config.vault / rel).write_bytes(src.read_bytes())
+        tdir = template_dir / "_templates"
+        if tdir.is_dir():
+            for src in sorted(tdir.glob("*.md")):
+                dst = config.vault / "_templates" / src.name
+                if not dst.exists():
+                    dst.write_bytes(src.read_bytes())
+    return True
+
+
 def _default_home() -> str:
     fm = {"type": "moc", "title": "Home", "created": today(), "updated": today(), "importance": 10, "tags": ["moc"]}
     body = (

@@ -1,6 +1,7 @@
 ---
 name: brain-capture
 description: Quick capture into the second brain's inbox — when to capture instead of remember, what to include so the item can be filed later without the conversation. Use when the user says "ghi lại", "note this", "lưu ý", "để đó", "capture", shares a link/idea/quote mid-task, or when /brain:capture is invoked.
+user-invocable: false
 ---
 
 # Brain capture

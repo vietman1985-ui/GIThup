@@ -1,6 +1,7 @@
 ---
 name: brain-recall
 description: Retrieval procedure for the second brain — how to turn a question into searches, read and cross-check notes, respect supersession, and answer with citations and confidence. Use when the user asks "do I/we know…", "what did I decide…", "nhớ lại", "tìm trong ghi chú", "what do my notes say", or when /brain:recall is invoked.
+user-invocable: false
 ---
 
 # Brain recall
