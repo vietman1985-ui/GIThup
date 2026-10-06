@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brain-second-brain"
+version = "0.1.0"
+description = "A plain-Markdown second brain for Claude Code and any MCP client — standard library only."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "vietman1985-ui" }]
+keywords = ["second-brain", "claude-code", "mcp", "obsidian", "memory", "pkm"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = []
+
+[project.scripts]
+brain = "brain.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/vietman1985-ui/GIThup"
+
+[tool.setuptools]
+packages = ["brain"]

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: tests (python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit tests (stdlib only)
+        run: python -m unittest discover -s tests -t . -v
+      - name: Seed vault is lint-clean
+        run: python bin/brain lint --strict
+      - name: Doctor
+        run: python bin/brain doctor
+
+  plugin:
+    name: validate Claude Code plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate plugin and marketplace manifests
+        run: claude plugin validate .
+      - name: Validate skills, agents and commands (strict)
+        run: |
+          claude plugin validate skills --strict
+          claude plugin validate agents --strict
+          claude plugin validate commands --strict

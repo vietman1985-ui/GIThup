@@ -1,0 +1,5 @@
+# index cache and per-session state — rebuilt automatically
+.brain/
+# Obsidian per-device files
+.obsidian/workspace*.json
+.obsidian/cache

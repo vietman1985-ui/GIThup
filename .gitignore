@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+# brain index cache lives inside the vault
+vault/.brain/
+# local Claude Code settings
+.claude/settings.local.json

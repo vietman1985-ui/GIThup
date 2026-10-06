@@ -1,0 +1,42 @@
+{
+  "$comment": "Project-level wiring so the brain works when this repo is opened in Claude Code without installing the plugin (MCP server comes from .mcp.json, skills/commands/agents need the plugin: `claude --plugin-dir .`). Hooks are deduplicated per session, so having the plugin installed as well is harmless.",
+  "permissions": {
+    "allow": [
+      "Bash(python3 bin/brain:*)",
+      "Bash(python3 -m unittest:*)",
+      "mcp__brain"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/brain\" hook session-start", "timeout": 15 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/brain\" hook prompt", "timeout": 10 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/brain\" hook post-tool", "timeout": 10 }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/bin/brain\" hook session-end", "timeout": 15 }
+        ]
+      }
+    ]
+  }
+}

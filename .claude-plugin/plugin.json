@@ -1,0 +1,19 @@
+{
+  "name": "brain",
+  "version": "0.1.0",
+  "description": "A plain-Markdown second brain for Claude Code: automatic memory (session context, per-prompt recall, episodic log), semantic notes with ADD/UPDATE/SUPERSEDE, an LLM-wiki compiled from sources, and a role-split agent team (librarian, consolidator, researcher, critic). Zero dependencies, no API key, Obsidian-compatible.",
+  "author": {
+    "name": "vietman1985-ui",
+    "url": "https://github.com/vietman1985-ui/GIThup"
+  },
+  "homepage": "https://github.com/vietman1985-ui/GIThup",
+  "repository": "https://github.com/vietman1985-ui/GIThup",
+  "license": "MIT",
+  "keywords": ["second-brain", "memory", "pkm", "obsidian", "mcp", "knowledge-base", "vietnamese"],
+  "mcpServers": {
+    "brain": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/brain", "mcp"]
+    }
+  }
+}

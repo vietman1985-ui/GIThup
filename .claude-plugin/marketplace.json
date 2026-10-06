@@ -1,0 +1,22 @@
+{
+  "name": "githup",
+  "owner": {
+    "name": "vietman1985-ui",
+    "url": "https://github.com/vietman1985-ui"
+  },
+  "metadata": {
+    "description": "Plugins from vietman1985-ui/GIThup",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "brain",
+      "source": "./",
+      "description": "Plain-Markdown second brain for Claude Code: automatic memory, semantic notes, LLM-wiki, agent team. No dependencies, no API key.",
+      "version": "0.1.0",
+      "author": { "name": "vietman1985-ui" },
+      "category": "productivity",
+      "keywords": ["second-brain", "memory", "pkm", "obsidian", "mcp"]
+    }
+  ]
+}

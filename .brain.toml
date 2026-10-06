@@ -1,0 +1,17 @@
+# Brain configuration for this repository.
+# When you run `brain` (or Claude Code hooks) anywhere inside this repo, the
+# vault below is used. Outside the repo the default is ~/.brain/vault, or the
+# BRAIN_VAULT environment variable.
+
+vault = "vault"
+
+[brain]
+# characters of context injected at SessionStart (~4 chars per token)
+context_budget = 2400
+# notes surfaced automatically per prompt (0 disables)
+recall_k = 3
+recall_min_score = 1.0
+auto_recall = true
+auto_log = true
+recency_half_life_days = 30
+stale_after_days = 180
