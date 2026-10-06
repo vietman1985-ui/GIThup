@@ -17,7 +17,7 @@ Bản đồ nội dung (map of content) của bộ não này. Bắt đầu từ 
 - **Semantic** — tri thức đã chắt lọc, mỗi ghi chú một ý:
   - sự kiện/dữ kiện: `memory/semantic/facts/` — ví dụ [[Brain uses SQLite FTS5 for retrieval]]
   - thực thể (người, dự án, công cụ): `memory/semantic/entities/` — ví dụ [[GIThup brain project]]
-  - quyết định: `memory/semantic/decisions/` — ví dụ [[Decision - build on Markdown plus SQLite, no vector DB]]
+  - quyết định: `memory/semantic/decisions/` — ví dụ [[Decision - build on Markdown plus SQLite, no vector DB]], [[Decision - rank by query coverage plus saturating BM25]], [[Decision - create the default vault on first use]]
   - sở thích/ưu tiên của người dùng: `memory/semantic/preferences/` — ví dụ [[User prefers Vietnamese]]
 - **Procedural** — quy trình đã học: `memory/procedural/` — ví dụ [[How to run a weekly brain review]]
 

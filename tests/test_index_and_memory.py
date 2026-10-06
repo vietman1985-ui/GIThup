@@ -116,6 +116,20 @@ class MemoryTests(VaultTestCase):
             # superseded note ranks below its successor
             hits = index.search("coffee tea preference", k=5, types=["preference"])
             self.assertEqual(hits[0].rel, path4.relative_to(self.vault).as_posix())
+            # the frontmatter superseded_by link counts for the graph, so lint is quiet
+            codes = {i.code for i in run_lint(self.config, index)}
+            self.assertNotIn("superseded-without-successor", codes)
+            self.assertIn(path.relative_to(self.vault).as_posix(), index.backlinks(path4.relative_to(self.vault).as_posix()))
+
+    def test_frontmatter_sources_count_as_links(self):
+        self.write("raw/Src.md", "---\ntype: raw\ntitle: Src\ncreated: 2026-01-01\n---\n# Src\n\nevidence\n")
+        self.write("wiki/Page.md", "---\ntype: wiki\ntitle: Page\ncreated: 2026-01-01\nsources: [[[Src]]]\n---\n# Page\n\nclaim\n")
+        with Index(self.config) as index:
+            index.refresh()
+            self.assertEqual(index.backlinks("raw/Src.md"), ["wiki/Page.md"])
+            codes = {(i.code, i.rel) for i in run_lint(self.config, index)}
+            self.assertNotIn(("raw-uncompiled", "raw/Src.md"), codes)
+            self.assertNotIn(("orphan", "wiki/Page.md"), codes)
 
     def test_resolve_never_escapes_the_vault(self):
         from brain.memory import resolve

@@ -173,12 +173,25 @@ def strip_code(body: str) -> str:
     return INLINE_CODE_RE.sub(" ", body)
 
 
-def extract_wikilinks(body: str) -> List[str]:
+def extract_wikilinks(body: str, frontmatter: Optional[Dict[str, Any]] = None) -> List[str]:
+    """Wikilinks in the body plus in frontmatter values (``sources``,
+    ``supersedes``, ``superseded_by``, …) so they count for the graph."""
     seen: List[str] = []
-    for m in WIKILINK_RE.finditer(strip_code(body)):
-        target = m.group("target").strip()
-        if target and target not in seen:
-            seen.append(target)
+
+    def scan(text: str) -> None:
+        for m in WIKILINK_RE.finditer(text):
+            target = m.group("target").strip()
+            if target and target not in seen:
+                seen.append(target)
+
+    scan(strip_code(body))
+    for value in (frontmatter or {}).values():
+        if isinstance(value, str):
+            scan(value)
+        elif isinstance(value, (list, tuple)):
+            for item in value:
+                if isinstance(item, str):
+                    scan(item)
     return seen
 
 
@@ -323,7 +336,7 @@ def load_note(vault: Path, path: Path) -> Note:
         title=title,
         type=infer_type(rel, fm),
         tags=extract_tags(body, fm),
-        links=extract_wikilinks(body),
+        links=extract_wikilinks(body, fm),
     )
 
 
