@@ -103,34 +103,39 @@ def ensure_vault(config: Config, template_dir: Optional[Path] = None) -> bool:
     if not config.source.startswith("default"):
         return False  # an explicit BRAIN_VAULT / .brain.toml that is missing is the user's call
     init_vault(config, template_dir=None)
-    if template_dir is not None and template_dir.is_dir():
-        for rel in ("_schema.md",):
-            src = template_dir / rel
-            if src.is_file() and not (config.vault / rel).exists():
-                (config.vault / rel).write_bytes(src.read_bytes())
-        tdir = template_dir / "_templates"
-        if tdir.is_dir():
-            for src in sorted(tdir.glob("*.md")):
-                dst = config.vault / "_templates" / src.name
-                if not dst.exists():
-                    dst.write_bytes(src.read_bytes())
+    _copy_schema_and_templates(config, template_dir)
     return True
+
+
+def _copy_schema_and_templates(config: Config, template_dir: Optional[Path]) -> None:
+    if template_dir is None or not template_dir.is_dir():
+        return
+    src = template_dir / "_schema.md"
+    if src.is_file() and not (config.vault / "_schema.md").exists():
+        (config.vault / "_schema.md").write_bytes(src.read_bytes())
+    tdir = template_dir / "_templates"
+    if tdir.is_dir():
+        for src in sorted(tdir.glob("*.md")):
+            dst = config.vault / "_templates" / src.name
+            if not dst.exists():
+                dst.write_bytes(src.read_bytes())
 
 
 def _default_home() -> str:
     fm = {"type": "moc", "title": "Home", "created": today(), "updated": today(), "importance": 10, "tags": ["moc"]}
     body = (
         "# Home\n\n"
-        "Map of content for this brain. Start here.\n\n"
+        "Map of content for this brain. Start here. Link your most important notes from this page "
+        "so nothing stays an orphan; see [[_schema]] for the note format.\n\n"
         "## Memory\n"
-        "- [[memory/semantic/facts]] · [[memory/semantic/entities]] · [[memory/semantic/decisions]] · [[memory/semantic/preferences]]\n"
-        "- Episodic log: `memory/episodic/` (one file per day)\n"
+        "- Semantic notes: `memory/semantic/facts/`, `entities/`, `decisions/`, `preferences/`\n"
+        "- Episodic log: `memory/episodic/` (one file per day, written by hooks)\n"
         "- Procedures: `memory/procedural/`\n\n"
         "## Knowledge\n"
         "- Wiki pages compiled from sources: `wiki/`\n"
         "- Raw sources (never edited by hand): `raw/`\n\n"
         "## Inbox\n"
-        "- Unprocessed captures: `inbox/`\n"
+        "- Unprocessed captures: `inbox/` — process with /brain:review\n"
     )
     return render_note(fm, body)
 
@@ -223,7 +228,13 @@ def remember(
     stem = slugify(title)
     index.refresh()
 
-    near = [(h.rel, h.score) for h in index.search(f"{title} {content[:200]}", k=5, types=[type_]) if h.score >= 2.0]
+    # near-duplicates: an existing note of the same type whose title overlaps
+    # the new title, or that covers most of what we are about to store
+    near = [
+        (h.rel, h.score)
+        for h in index.search(f"{title} {content[:200]}", k=5, types=[type_])
+        if h.title_hits >= 2 or h.coverage >= 0.5
+    ]
     existing_rels = index.find_by_stem(stem)
     existing = (config.vault / existing_rels[0]) if existing_rels else None
 

@@ -9,12 +9,14 @@ penalty, so the brain surfaces what matters now, not just what matches.
 
 from __future__ import annotations
 
+import bisect
 import datetime as _dt
 import hashlib
 import math
 import os
 import re
 import sqlite3
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -80,6 +82,56 @@ class Hit:
     snippet: str
     summary: str
     tags: List[str]
+    title_hits: int = 0  # query tokens found in the title
+    body_hits: int = 0  # query tokens found in the body
+    coverage: float = 0.0  # 0..1, how much of the query the note covers
+
+    @property
+    def relevant(self) -> bool:
+        """Gate for unsolicited injection: a title match or two body matches."""
+        return self.title_hits >= 1 or self.body_hits >= 2
+
+
+# Words that carry no meaning for retrieval (Vietnamese + English).  Removed
+# from the query before matching so "what did we decide about X" scores on
+# "decide" and "X", not on "what/did/we/about".
+STOPWORDS = {
+    # vi
+    "là", "và", "của", "có", "cho", "với", "các", "những", "được", "một", "này", "đó", "không", "để", "về",
+    "như", "thì", "mà", "ở", "tôi", "bạn", "mình", "gì", "nào", "làm", "sao", "khi", "đã", "sẽ", "đang", "hay",
+    "hoặc", "nhé", "ạ", "ơi", "cái", "rồi", "lại", "nữa", "từ", "trong", "ra", "lên", "xuống", "còn", "chỉ",
+    "hãy", "giúp", "nhớ", "biết", "muốn", "cần", "ý", "ấy", "kia", "đâu", "bao", "nhiêu", "vì", "nên", "bị",
+    # en
+    "the", "a", "an", "is", "are", "was", "were", "be", "do", "does", "did", "what", "which", "who", "how",
+    "when", "where", "why", "of", "to", "in", "on", "for", "with", "and", "or", "i", "you", "we", "my", "our",
+    "me", "it", "its", "this", "that", "these", "those", "please", "can", "could", "would", "should", "about",
+    "from", "at", "by", "as", "if", "then", "than", "so", "not", "no", "yes", "know", "tell", "want", "need",
+    "remember", "recall", "note", "notes", "brain", "user", "users",
+}
+
+
+def fold(text: str) -> str:
+    """Lowercase and strip diacritics (đ → d) so matching ignores tone marks."""
+    text = text.lower().replace("đ", "d")
+    decomposed = unicodedata.normalize("NFD", text)
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+
+def query_tokens(query: str) -> List[str]:
+    raw = [t for t in re.findall(r"\w+", query, flags=re.UNICODE) if t]
+    folded = [fold(t) for t in raw]
+    kept = [t for t, f in zip(raw, folded) if f not in STOPWORDS and fold(t) not in STOPWORDS and f.lower() not in STOPWORDS]
+    kept = [t for t in kept if t.lower() not in STOPWORDS]
+    return (kept or raw)[:24]
+
+
+def _has_prefix(words: List[str], tok: str) -> bool:
+    """``words`` is sorted; True if any word equals or starts with ``tok``."""
+    if len(tok) < 3:
+        i = bisect.bisect_left(words, tok)
+        return i < len(words) and words[i] == tok
+    i = bisect.bisect_left(words, tok)
+    return i < len(words) and words[i].startswith(tok)
 
 
 def _hash(text: bytes) -> str:
@@ -229,17 +281,30 @@ class Index:
     @staticmethod
     def build_fts_query(query: str) -> str:
         """Turn free text into a safe FTS5 query: OR of quoted (prefix) tokens."""
-        tokens = [t for t in re.findall(r"\w+", query, flags=re.UNICODE) if t]
+        tokens = query_tokens(query)
         if not tokens:
             return ""
         parts = []
-        for t in tokens[:24]:
+        for t in tokens:
             t = t.replace('"', "")
             if len(t) >= 3:
                 parts.append(f'"{t}"*')
             else:
                 parts.append(f'"{t}"')
         return " OR ".join(parts)
+
+    @staticmethod
+    def _coverage(tokens: List[str], title: str, body: str) -> Tuple[int, int, float]:
+        """Count query tokens found in title / body (diacritics-insensitive, prefix for 3+ chars)."""
+        if not tokens:
+            return 0, 0, 0.0
+        title_words = sorted(set(re.findall(r"\w+", fold(title))))
+        body_words = sorted(set(re.findall(r"\w+", fold(body[:20000]))))
+        folded = [fold(t) for t in tokens]
+        th = sum(1 for t in folded if _has_prefix(title_words, t))
+        bh = sum(1 for t in folded if _has_prefix(body_words, t))
+        coverage = (2 * th + bh) / (3.0 * len(folded))
+        return th, bh, min(1.0, coverage)
 
     def search(
         self,
@@ -252,9 +317,11 @@ class Index:
         fts = self.build_fts_query(query)
         if not fts:
             return []
+        tokens = query_tokens(query)
         half_life = float(self.config.get("recency_half_life_days", 30)) or 30.0
         sql = """
             SELECT n.rel, n.title, n.type, n.status, n.importance, n.updated, n.summary, n.tags,
+                   notes_fts.body AS body,
                    bm25(notes_fts, 4.0, 2.0, 1.0) AS rank,
                    snippet(notes_fts, 3, '[', ']', '…', 18) AS snip
             FROM notes_fts JOIN notes n ON n.rel = notes_fts.rel
@@ -274,9 +341,13 @@ class Index:
         params.append(max(k * 4, 20))
         hits: List[Hit] = []
         for r in self.conn.execute(sql, params):
-            base = -float(r["rank"])  # bm25() is negative; higher is better after negation
-            if base <= 0:
-                base = 0.01
+            # bm25() is negative for good matches, but its IDF turns positive for
+            # terms present in more than half the notes, so it cannot be the
+            # whole score.  Combine a saturating BM25 part with query coverage.
+            bm25_part = max(0.0, -float(r["rank"]))
+            bm25n = bm25_part / (bm25_part + 5.0)
+            th, bh, coverage = self._coverage(tokens, r["title"] or "", r["body"] or "")
+            base = 1.0 + 4.0 * coverage + 3.0 * bm25n
             importance_boost = 1.0 + 0.08 * (int(r["importance"]) - 5)
             days = _days_since(r["updated"])
             recency_boost = 1.0 + (0.5 * math.exp(-math.log(2) * days / half_life) if days is not None else 0.0)
@@ -295,6 +366,9 @@ class Index:
                     snippet=re.sub(r"\s+", " ", r["snip"] or "").strip(),
                     summary=r["summary"] or "",
                     tags=[t for t in (r["tags"] or "").split() if t],
+                    title_hits=th,
+                    body_hits=bh,
+                    coverage=round(coverage, 3),
                 )
             )
         hits.sort(key=lambda h: h.score, reverse=True)

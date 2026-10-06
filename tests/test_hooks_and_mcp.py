@@ -55,6 +55,8 @@ class HookTests(VaultTestCase):
         self.assertTrue((vault / "_templates" / "fact.md").exists())
         self.assertFalse((vault / "wiki" / "Second brain landscape 2026.md").exists(), "example notes are not copied")
         self.assertIn("[brain]", json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"])
+        lint = subprocess.run(BRAIN + ["lint", "--strict"], capture_output=True, text=True, env=env, cwd=str(self.tmp))
+        self.assertEqual(lint.returncode, 0, lint.stdout)
         # an explicit but missing BRAIN_VAULT is never auto-created
         env["BRAIN_VAULT"] = str(self.tmp / "explicit-missing")
         r = subprocess.run(BRAIN + ["hook", "session-start"], input="{}", capture_output=True, text=True, env=env, cwd=str(self.tmp))

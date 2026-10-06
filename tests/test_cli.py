@@ -60,6 +60,10 @@ class CliTests(VaultTestCase):
         self.assertTrue((self.tmp / "fresh" / "Home.md").exists())
         self.assertTrue((self.tmp / "fresh" / "memory" / "semantic" / "facts").is_dir())
         self.assertTrue((self.tmp / "fresh" / ".gitignore").exists())
+        # a brand-new vault must be lint-clean (no broken links in the generated Home.md)
+        r = subprocess.run(BRAIN + ["lint", "--strict"], capture_output=True, text=True, env=env, cwd=str(self.tmp))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("[error]", r.stdout)
 
 
 if __name__ == "__main__":

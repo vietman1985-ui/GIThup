@@ -149,6 +149,19 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    try:
+        return _main(argv)
+    except BrokenPipeError:  # e.g. `brain lint | head`
+        try:
+            sys.stdout = open(os.devnull, "w")  # let Python flush quietly at exit
+        except OSError:
+            pass
+        return 0
+    except KeyboardInterrupt:
+        return 130
+
+
+def _main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     config = load_config(vault_override=args.vault)
@@ -164,6 +177,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             if template.resolve() == config.vault.resolve():
                 template = None  # initialising the seed vault itself
         created = init_vault(config, template_dir=template, force=args.force)
+        if args.no_template:
+            # still ship the schema and templates: Home.md links to [[_schema]]
+            from .memory import _copy_schema_and_templates
+
+            _copy_schema_and_templates(config, REPO_ROOT / "vault")
         print(f"vault: {config.vault}")
         for c in created:
             print(f"  + {c}")

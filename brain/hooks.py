@@ -70,10 +70,14 @@ def handle(config: Config, event: str, payload: Dict[str, Any]) -> Tuple[str, in
         if len(stripped) < 8 or stripped.startswith("/"):
             return "", 0
         k = int(config.get("recall_k", 3))
-        min_score = float(config.get("recall_min_score", 1.0))
+        min_score = float(config.get("recall_min_score", 3.5))
         with Index(config) as index:
             index.refresh()
-            hits = [h for h in index.search(stripped, k=k, types=["fact", "entity", "decision", "preference", "procedure", "wiki"]) if h.score >= min_score]
+            hits = [
+                h
+                for h in index.search(stripped, k=k, types=["fact", "entity", "decision", "preference", "procedure", "wiki"])
+                if h.score >= min_score and h.relevant
+            ]
         return _context_output(event, format_recall(hits)), 0
 
     if event == "post-tool":

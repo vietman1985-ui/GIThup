@@ -10,7 +10,8 @@ vault = "vault"
 context_budget = 2400
 # notes surfaced automatically per prompt (0 disables)
 recall_k = 3
-recall_min_score = 1.0
+# scores start at 1.0; ~3.5 = covers most of the query or matches the title
+recall_min_score = 3.5
 auto_recall = true
 auto_log = true
 recency_half_life_days = 30

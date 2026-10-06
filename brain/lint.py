@@ -98,15 +98,25 @@ def run_lint(config: Config, index: Index) -> List[Issue]:
     return issues
 
 
-def format_issues(issues: List[Issue]) -> str:
+def format_issues(issues: List[Issue], per_code: int = 40) -> str:
+    """Human-readable report; at most ``per_code`` items are listed per code so
+    a 2,000-note vault does not produce a 700-line report (counts stay exact)."""
     if not issues:
         return "OK — no issues found."
     lines = []
     counts: Dict[str, int] = {}
+    shown: Dict[str, int] = {}
+    hidden: Dict[str, int] = {}
     for i in issues:
         counts[i.level] = counts.get(i.level, 0) + 1
+        if shown.get(i.code, 0) >= per_code:
+            hidden[i.code] = hidden.get(i.code, 0) + 1
+            continue
+        shown[i.code] = shown.get(i.code, 0) + 1
         lines.append(f"[{i.level}] {i.code}: {i.rel} — {i.message}")
-        if i.hint:
+        if i.hint and shown[i.code] == 1:
             lines.append(f"    ↳ {i.hint}")
+    for code, n in hidden.items():
+        lines.append(f"… {n} more {code} issue(s) not shown (use --json for all)")
     head = ", ".join(f"{n} {lvl}" for lvl, n in sorted(counts.items(), key=lambda kv: {'error': 0, 'warn': 1, 'info': 2}.get(kv[0], 9)))
     return f"{head}\n" + "\n".join(lines)

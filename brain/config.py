@@ -42,8 +42,10 @@ DEFAULTS: Dict[str, Any] = {
     "context_budget": 2400,
     # How many notes the UserPromptSubmit hook may surface per prompt.
     "recall_k": 3,
-    # Minimum score a recalled note needs before it is injected into a prompt.
-    "recall_min_score": 1.0,
+    # Minimum score a recalled note needs before it is injected into a prompt
+    # (scores start at 1.0; ~3.5 means the note covers most of the query or
+    # matches it in the title).  The hook also requires Hit.relevant.
+    "recall_min_score": 3.5,
     # Whether the UserPromptSubmit hook injects recalled notes at all.
     "auto_recall": True,
     # Whether hooks write to the episodic log.
