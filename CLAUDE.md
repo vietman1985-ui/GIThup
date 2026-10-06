@@ -31,8 +31,8 @@ python3 bin/brain lint                           # vault health
 - Deterministic parts (indexing, ranking, lint, logging) live in Python; judgement lives in skills/agents.
 - Hooks must never fail a session: catch everything, print nothing, exit 0 on error.
 - Never edit `vault/raw/` or rewrite episodic logs; archive/supersede instead of deleting notes.
-- Keep the seed vault lint-clean (`python3 bin/brain lint` shows no `error`), and do not commit
-  `vault/memory/episodic/*.md` generated while testing locally.
+- Keep the seed vault lint-clean (`python3 bin/brain lint` shows no `error`). `vault/memory/episodic/`
+  and `vault/.brain/` are git-ignored: the hooks write there whenever someone opens this repo.
 - Commit messages: imperative mood, explain *why* in the body when it is not obvious.
 
 ## When working in this repo

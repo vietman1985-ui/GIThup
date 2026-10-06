@@ -6,5 +6,8 @@ dist/
 .venv/
 # brain index cache lives inside the vault
 vault/.brain/
+# episodic logs are written by the hooks of whoever opens this repo — per-user,
+# not part of the example vault
+vault/memory/episodic/
 # local Claude Code settings
 .claude/settings.local.json
